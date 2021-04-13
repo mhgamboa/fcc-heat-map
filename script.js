@@ -1,6 +1,7 @@
-const h = 450;
-const w = 1200;
+const h = 410;
+const w = 1250;
 const padding = 60;
+const tooltip = d3.select("#tooltip");
 
 const svg = d3.select("body").append("svg").attr("width", w).attr("height", h);
 
@@ -11,7 +12,7 @@ fetch(
   .then((data) => {
     monthsData = data.monthlyVariance;
     let baseTemp = data.baseTemperature;
-    console.log(monthsData);
+    console.log(d3.min(monthsData, (d) => d.variance));
 
     const parseMonth = d3.timeParse("%m"); //Converts numbers into months
 
@@ -50,13 +51,11 @@ fetch(
       "#5E4FA2",
       "#3288BD",
       "#66C2A5",
-      "#ABDDA4",
       "#E6F598",
       "#FFFFBF",
       "#FEE08B",
       "#FDAE61",
       "#F46D43",
-      "#D53E4F",
       "#9E0142",
     ];
     let fillColors = d3
@@ -80,9 +79,33 @@ fetch(
       .attr("width", (w / monthsData.length) * 10)
       .attr("height", (h - padding) / 12 - 3)
       .attr("y", (d) => yScale(parseMonth(d.month - 1)))
-      .attr("x", (d) => xScale(d.year));
+      .attr("x", (d) => xScale(d.year))
+      // Add ToolTips when hovering
+      .on("mouseover", (e, d) => {
+        tooltip
+          .attr("data-year", d.year)
+          .style("visibility", "visible")
+          .style("left", e.pageX - 25 + "px")
+          .style("top", e.pageY - 90 + "px")
+          .html(
+            `${d.year} - ${d.month}<br>${8.66 + d.variance}℃<br>${d.variance}`
+          );
+      })
+      .on("mousemove", (e, d) => {
+        tooltip
+          .attr("data-year", d.year)
+          .style("visibility", "visible")
+          .style("left", e.pageX - 25 + "px")
+          .style("top", e.pageY - 90 + "px")
+          .html(
+            `${d.year} - ${d.month}<br>${8.66 + d.variance}℃<br>${d.variance}`
+          );
+      })
+      .on("mouseout", (e, d) => {
+        tooltip.transition().style("visibility", "hidden");
+      });
 
-    /* Add items to legend */
+    /* Create Legend and Add items to legend */
     const legend = d3
       .select("body")
       .append("svg")
@@ -90,20 +113,16 @@ fetch(
       .attr("height", 100)
       .attr("id", "legend");
 
-    legend.selectAll("rect").data(colors).enter().append("rect");
-
-    const legendxScale = d3
-      .scaleLinear()
-      .domain([
-        d3.min(monthsData, (d) => d.year),
-        d3.max(monthsData, (d) => d.year),
-      ])
-      .range([padding, w - padding]);
-
-    const legendxAxis = d3.axisBottom(xScale);
-
     legend
-      .append("g")
-      .call(legendxAxis)
-      .attr("transform", `translate(0, ${h})`);
+      .selectAll("rect")
+      .data(colors)
+      .enter()
+      .append("rect")
+      .attr("height", 50)
+      .attr("width", 50)
+      .attr("fill", (d) => d)
+      .attr("x", (d, i) => i * (w / colors.length) + 45)
+      .attr("y", "25")
+      .append("title")
+      .text((d, i) => `>${2.8 + i * 1.1}℃`);
   });
