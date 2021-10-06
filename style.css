@@ -20,7 +20,9 @@ body {
 }
 
 svg {
-  background: pink;
+  background: whitesmoke;
+  border: solid gray 1px;
+  border-radius: 10px;
 }
 
 #legend {
